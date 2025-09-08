@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Tuple
 
 import cv2
 
@@ -14,8 +14,8 @@ class ProbeResult:
     opened: bool
     backend: str
     fourcc_set: str | None
-    frame_size: Tuple[int, int] | None
-    res_tests: List[Tuple[int, int, bool, Tuple[int, int] | None]]  # (w,h,ok,actual)
+    frame_size: tuple[int, int] | None
+    res_tests: list[tuple[int, int, bool, tuple[int, int] | None]]  # (w,h,ok,actual)
 
 
 def parse_args() -> argparse.Namespace:
@@ -24,7 +24,9 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument("--device", type=int, default=None, help="Only probe this device index")
-    p.add_argument("--max-devices", type=int, default=6, help="Scan indices [0..N-1] if --device not set")
+    p.add_argument(
+        "--max-devices", type=int, default=6, help="Scan indices [0..N-1] if --device not set"
+    )
     p.add_argument(
         "--probe-res",
         action="store_true",
@@ -44,10 +46,16 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("--show", action="store_true", help="Show a preview frame if available")
     p.add_argument("--snap", type=Path, default=None, help="Save a snapshot JPEG if available")
+    p.add_argument(
+        "--read-timeout-ms",
+        type=int,
+        default=2000,
+        help="Attempt to cap read/open timeouts (if backend supports it)",
+    )
     return p.parse_args()
 
 
-def parse_res_list(s: str) -> Iterable[Tuple[int, int]]:
+def parse_res_list(s: str) -> Iterable[tuple[int, int]]:
     for tok in s.split(","):
         tok = tok.strip().lower()
         if "x" in tok:
@@ -85,15 +93,38 @@ def grab_frame(cap: cv2.VideoCapture):
     return frame if ok else None
 
 
-def probe_device(idx: int, probe_res: bool, res_list: Iterable[Tuple[int, int]], fourcc: str | None) -> ProbeResult:
+def _set_timeouts(cap: cv2.VideoCapture, read_timeout_ms: int) -> None:
+    # Best-effort: only works on newer OpenCV/backends
+    try:
+        if hasattr(cv2, "CAP_PROP_OPEN_TIMEOUT_MSEC"):
+            cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, int(read_timeout_ms))
+    except Exception:
+        pass
+    try:
+        if hasattr(cv2, "CAP_PROP_READ_TIMEOUT_MSEC"):
+            cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, int(read_timeout_ms))
+    except Exception:
+        pass
+
+
+def probe_device(
+    idx: int,
+    probe_res: bool,
+    res_list: Iterable[tuple[int, int]],
+    fourcc: str | None,
+    read_timeout_ms: int,
+) -> ProbeResult:
     cap = cv2.VideoCapture(idx)
+    _set_timeouts(cap, read_timeout_ms)
     opened = cap.isOpened()
-    res_tests: List[Tuple[int, int, bool, Tuple[int, int] | None]] = []
+    res_tests: list[tuple[int, int, bool, tuple[int, int] | None]] = []
     fr_size = None
     fourcc_set = None
     try:
         if not opened:
-            return ProbeResult(idx, False, backend="unknown", fourcc_set=None, frame_size=None, res_tests=[])
+            return ProbeResult(
+                idx, False, backend="unknown", fourcc_set=None, frame_size=None, res_tests=[]
+            )
 
         backend = backend_name(cap)
         fourcc_set = set_fourcc(cap, fourcc)
@@ -105,7 +136,7 @@ def probe_device(idx: int, probe_res: bool, res_list: Iterable[Tuple[int, int]],
             fr_size = (w, h)
 
         if probe_res:
-            for (w, h) in res_list:
+            for w, h in res_list:
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, int(w))
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, int(h))
                 test = grab_frame(cap)
@@ -115,7 +146,14 @@ def probe_device(idx: int, probe_res: bool, res_list: Iterable[Tuple[int, int]],
                     hh, ww = test.shape[:2]
                     res_tests.append((w, h, True, (ww, hh)))
 
-        return ProbeResult(idx, True, backend=backend, fourcc_set=fourcc_set, frame_size=fr_size, res_tests=res_tests)
+        return ProbeResult(
+            idx,
+            True,
+            backend=backend,
+            fourcc_set=fourcc_set,
+            frame_size=fr_size,
+            res_tests=res_tests,
+        )
     finally:
         cap.release()
 
@@ -149,7 +187,13 @@ def main() -> int:
     print("Scanning cameras...")
     found = []
     for idx in targets:
-        r = probe_device(idx, probe_res=args.probe_res, res_list=res_list, fourcc=args.fourcc or None)
+        r = probe_device(
+            idx,
+            probe_res=args.probe_res,
+            res_list=res_list,
+            fourcc=args.fourcc or None,
+            read_timeout_ms=getattr(args, "read_timeout_ms", 2000),
+        )
         if not r.opened:
             print(f"- /dev/video{idx}: not available")
             continue
@@ -159,7 +203,7 @@ def main() -> int:
             w, h = r.frame_size
             print(f"  default frame: {w}x{h}")
         if args.probe_res and r.res_tests:
-            for (w, h, ok, actual) in r.res_tests:
+            for w, h, ok, actual in r.res_tests:
                 if ok and actual:
                     aw, ah = actual
                     print(f"  try {w}x{h}: OK -> {aw}x{ah}")
@@ -182,4 +226,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
