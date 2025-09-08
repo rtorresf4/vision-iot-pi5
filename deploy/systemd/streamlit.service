@@ -1,0 +1,20 @@
+[Unit]
+Description=Streamlit Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/vision-iot-pi5
+ExecStart=/home/pi/vision/bin/streamlit run apps/streamlit_dashboard/Home.py --server.port 8501 --server.headless true
+Restart=always
+RestartSec=2
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+LockPersonality=true
+ReadWritePaths=/home/pi/vision-iot-pi5
+
+[Install]
+WantedBy=multi-user.target

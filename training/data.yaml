@@ -1,0 +1,6 @@
+# training/data.yaml (placeholder)
+path: ../data
+train: images
+val: images
+nc: 2
+names: [ok, defect]

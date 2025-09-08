@@ -1,0 +1,22 @@
+# apps/pi_detector/config.yaml
+broker:
+  host: localhost
+  port: 1883
+  keepalive: 60
+  qos: 0
+  client_id: pi5-detector
+  base_topic: factory/line1
+
+model:
+  path: models/yolov8n.onnx
+  imgsz: 640
+  conf_thres: 0.5
+  iou_thres: 0.5
+
+video:
+  device: 0
+  width: 640
+  height: 480
+
+logging:
+  level: INFO  # DEBUG/INFO/WARNING/ERROR

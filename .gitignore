@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+env/
+venv/
+
+# Data & models
+data/images/*
+data/labels/*
+models/*.pt
+models/*.tflite
+models/*.onnx
+
+# Logs & outputs
+*.log
+*.csv
+*.db
+runs/
+outputs/

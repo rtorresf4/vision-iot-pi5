@@ -1,0 +1,2 @@
+ultralytics==8.*
+# torch/torchvision will be pulled as dependencies when needed.
