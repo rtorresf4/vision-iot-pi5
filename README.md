@@ -85,6 +85,73 @@ python apps/tools/capture_dataset.py --label defect --every 5
 
 ---
 
+## 🧪 Cómo probar en tu PC (sin Raspberry Pi)
+
+### 1) Preparar entorno
+- Crear entorno e instalar deps:
+  ```bash
+  python3 -m venv .venv
+  source .venv/bin/activate
+  make setup
+  make dev   # opcional (linter/formatter/hooks)
+  ```
+
+### 2) Comprobar la cámara
+- Probar detección de dispositivos y resoluciones comunes (recomendado MJPG):
+  ```bash
+  make check-camera
+  ```
+- Si todo bien, capturar un pequeño lote con previsualización:
+  ```bash
+  make capture-ok
+  make capture-defect
+  ```
+- Resultado:
+  - Imágenes en `data/ok/` y `data/defect/`
+  - Metadatos en `data/metadata.csv`
+
+Consejos:
+- Si `video0` falla, prueba `--device 1` en `apps/tools/check_camera.py`.
+- 720p (1280x720) suele ir más fluido que 1080p en CPU.
+- Cierra apps que usen la webcam (Zoom/Teams/Chrome) si no abre.
+
+### 3) Probar el dashboard + MQTT local
+1. Instala un broker local (Ubuntu/Debian):
+   ```bash
+   sudo apt update && sudo apt install -y mosquitto mosquitto-clients
+   sudo systemctl enable --now mosquitto
+   ```
+2. Arranca el dashboard:
+   ```bash
+   make run-dashboard
+   ```
+3. Simula detecciones (publicación cada 1s):
+   ```bash
+   make sim-detections
+   ```
+4. Verás las métricas en el dashboard. Para parar el simulador: Ctrl+C.
+
+### 4) (Opcional) Probar el detector en PC
+- Coloca un modelo ONNX en `models/yolov8n.onnx` (o ajusta la ruta en `apps/pi_detector/config.yaml`).
+- Conecta tu webcam y ejecuta:
+  ```bash
+  make run-detector
+  ```
+- El detector publicará resultados a MQTT en `factory/line1/detections`.
+
+### 5) Calidad de código
+```bash
+make lint
+make test
+```
+
+### Troubleshooting rápido
+- Cámara no abre: revisa `make check-camera`, FOURCC `--fourcc MJPG` y permisos; prueba otro puerto USB.
+- Dashboard no muestra datos: confirma que Mosquitto está activo (`sudo systemctl status mosquitto`) y que `make sim-detections` no lanza errores de conexión.
+- Alto uso de CPU: reduce resolución a 640×480 en las herramientas y en la configuración.
+
+---
+
 ## 🖥️ Recommended IDE — Visual Studio Code
 
 It is recommended to install **Visual Studio Code from the official `.deb` package**, not the Snap Store, for better performance and compatibility.
