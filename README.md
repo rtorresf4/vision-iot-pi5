@@ -1,44 +1,52 @@
-# Vision + IoT on Raspberry Pi 5 (Educational Portfolio)
+# Vision + IoT on Raspberry Pi 5 (Technical Prototype)
 
-> **Goal:** Build an **edge AI system** on a Raspberry Pi 5 (8GB) that detects defects in industrial parts in real time, integrates IoT sensors, and streams results to an interactive dashboard.  
+> **Goal:** A foundational architectural prototype targeting Raspberry Pi 5 (8GB) for supervised object detection in a fixed-camera, single-package inspection scenario.
 >
-> This repository is designed both as a **technical prototype** and as an **educational portfolio**, showing not only the *code* but also the *thought process* behind each design choice.
+> This repository serves as a **technical prototype** and **educational portfolio**, documenting an architectural baseline for an industrial-style vision pipeline. It is not intended for production deployment.
 
 ---
 
-## 🎯 Project Objectives
-- Implement a **lightweight object detection model** (YOLOv8n exported to ONNX/TFLite).  
-- Integrate **IoT sensors** (temperature, motion) via MQTT.  
-- Develop a **Streamlit dashboard** for live video, KPIs, and alerts.  
-- Train a **custom dataset** (OK vs Defective parts).  
-- Deliver a **robust industrial-ready prototype** documented for recruiters and engineers.  
+## 🎯 Project Status
+This project is currently in the **baseline architectural phase**.
+
+**Current Implementation:**
+- Base structure for inference using ONNX Runtime.
+- MQTT event distribution infrastructure.
+- Systemd service templates for deployment.
+- Prototype CI pipeline (linting, type-checking, basic tests).
+- Prototype dashboard for monitoring (pre-Architecture-v2 baseline).
+
+**Target Architecture (v2):**
+- Supervised object detection for visible defect identification.
+- Reference Model: YOLO26n (ONNX baseline, NCNN as optimized candidate).
+- Pipeline: Fixed-camera inspection, one package per inspection.
+
+**Deferred / Future Extensions:**
+- IoT sensor integration (DHT22, PIR telemetry).
+- Advanced dashboard features (live video/Streamlit-WebRTC, SQLite historical tracking).
 
 ---
 
 ## 🏗️ System Architecture
-```
-[USB Camera] → [Raspberry Pi 5: OpenCV + YOLOv8n (ONNX/TFLite)]
-    ├─ Detection results → MQTT → [Streamlit Dashboard]
-    └─ Telemetry (CPU temp, FPS, health)
+The project follows a layered architecture (Hardware, Vision, Domain, Infrastructure).
 
-[Sensors: DHT22, PIR] → MQTT → Dashboard
-```
+For detailed design decisions and the current architectural baseline, please refer to:
+- [`docs/architecture.md`](docs/architecture.md)
+- [`docs/adr/README.md`](docs/adr/README.md)
 
-**MQTT Topics:**
-- `factory/line1/detections` → detection results (JSON per frame).  
-- `factory/line1/telemetry` → system telemetry (CPU, memory, temp).  
-- `factory/line1/sensors` → IoT data (temperature, humidity, motion).  
-- `factory/line1/status` → LWT for online/offline.  
+*Note: The system is designed for modularity. While a pre-Architecture-v2 prototype exists, development is ongoing to align it with the target v2 architecture.*
 
 ---
 
 ## 🛠️ Tech Stack
-- **Hardware:** Raspberry Pi 5 (8GB), USB webcam, DHT22 sensor, PIR sensor.  
-- **Software:** Python, OpenCV, ONNX Runtime / TFLite, MQTT (Mosquitto), Streamlit.  
-- **ML Training:** Ultralytics YOLOv8, Google Colab / local GPU.  
-- **Deployment:** systemd services (with hardening), Makefile, pre-commit hooks.  
-- **CI/CD:** GitHub Actions (lint, type-check, tests).  
-- **IDE:** Visual Studio Code (official `.deb` installation, not Snap).  
+- **Hardware:** Raspberry Pi 5 (8GB), USB webcam.
+- **Software:** Python, OpenCV, ONNX Runtime.
+- **Model Strategy:**
+  - Initial reference model: YOLO26n.
+  - Baseline runtime: ONNX.
+  - Optimized candidate: NCNN (production runtime undecided pending Pi 5 benchmarking).
+- **Deployment:** systemd services, Makefile, pre-commit hooks.
+- **CI/CD:** Prototype GitHub Actions (lint, type-check, tests).
 
 ---
 
@@ -168,84 +176,74 @@ code
 ```
 
 ### Suggested Extensions
-- **Python** (ms-python.python)  
-- **Pylance** (ms-python.vscode-pylance)  
-- **Jupyter** (ms-toolsai.jupyter)  
-- **Remote - SSH** (ms-vscode-remote.remote-ssh)  
-- **Prettier - Code Formatter** (esbenp.prettier-vscode)  
-- **GitLens** (eamodio.gitlens)  
-- **Docker** (ms-azuretools.vscode-docker) (optional for future)  
+- **Python** (ms-python.python)
+- **Pylance** (ms-python.vscode-pylance)
+- **Jupyter** (ms-toolsai.jupyter)
+- **Remote - SSH** (ms-vscode-remote.remote-ssh)
+- **Prettier - Code Formatter** (esbenp.prettier-vscode)
+- **GitLens** (eamodio.gitlens)
+- **Docker** (ms-azuretools.vscode-docker) (optional for future)
 
-> Pro tip: mention in your portfolio that you used **Ubuntu 22.04 + VS Code (with Python, Pylance, Remote SSH)** → it shows a professional development workflow.  
+> Pro tip: mention in your portfolio that you used **Ubuntu 22.04 + VS Code (with Python, Pylance, Remote SSH)** → it shows a professional development workflow.
 
 ---
 
 ## 📦 Repository Structure
 ```
 apps/
-  pi_detector/         # Inference pipeline (ONNX/TFLite) + MQTT publisher
-  streamlit_dashboard/ # Live KPIs and video
-  sensors/             # IoT sensor integration
+  pi_detector/         # Inference pipeline (ONNX) + MQTT publisher
+  streamlit_dashboard/ # Prototype/partial monitoring dashboard
+  sensors/             # IoT sensor integration (Deferred)
   tools/               # Dataset capture tool
 deploy/
   systemd/             # Hardened systemd services
   scripts/             # Install/run scripts
 docs/
-  INDUSTRIAL_NOTES.md  # Notes for recruiters (industrial-ready)
-models/                # YOLO models (.onnx, .tflite)
+  INDUSTRIAL_NOTES.md  # Supporting notes (Legacy)
+models/                # Models (.onnx)
 data/                  # Images, labels, metadata.csv
-training/              # Training configs + Colab notebook
+training/              # Training configs
 tests/                 # Pytest tests
 ```
 
 ---
 
 ## 🧪 Continuous Integration
-This repo includes a **GitHub Actions workflow** (`.github/workflows/ci.yml`) that:  
-- Runs `ruff`, `black`, `mypy` to ensure code quality.  
-- Executes unit tests (`pytest`).  
-- Builds on **Ubuntu latest** with Python 3.11.  
+This repo includes a prototype **GitHub Actions workflow** (`.github/workflows/ci.yml`) that:
+- Runs `ruff`, `black`, `mypy` for basic code quality.
+- Executes unit tests (`pytest`).
+- Builds on **Ubuntu latest** with Python 3.11.
 
-> ✅ Demonstrates professional workflows (important for industrial/automotive companies).  
+> ✅ Demonstrates professional workflows.
 
 ---
 
-## 📊 Metrics to Deliver
-- **Detection performance:** mAP50 ≥ 0.80 on validation set.  
-- **Runtime speed:** ≥ 15 FPS @ 640×480 on Raspberry Pi 5.  
-- **Latency:** < 150 ms per frame end-to-end.  
-- **IoT reliability:** ≥ 99% MQTT message delivery, auto-reconnect < 5s.  
+## 📊 Performance Targets
+*The following are benchmark goals for the final implementation, not currently achieved results.*
+
+- **Detection performance:** Target mAP50 ≥ 0.80 on validation set.
+- **Runtime speed:** Target ≥ 15 FPS @ 640×480 on Raspberry Pi 5.
+- **Latency:** Target < 150 ms per frame end-to-end.
+- **IoT reliability:** Target ≥ 99% MQTT message delivery, auto-reconnect < 5s.
 
 ---
 
 ## 📝 Educational Narrative
-Each sprint will be documented with:  
-- **What I did** → concrete steps.  
-- **Results** → screenshots, metrics, plots.  
-- **Lessons learned** → insights, trade-offs, mistakes.  
+Each sprint is documented with:
+- **What I did** → concrete steps.
+- **Results** → initial screenshots, metrics, plots (as available).
+- **Lessons learned** → insights, trade-offs, mistakes.
 
-This transforms the repository into both a **working prototype** and a **teaching resource**.  
-
----
-
-## 🏭 Industrial-Ready Highlights
-- Config-driven runtime (`apps/pi_detector/config.yaml`).  
-- Robust MQTT client with LWT + exponential backoff.  
-- Hardened `systemd` services (`ProtectSystem`, `PrivateTmp`, etc.).  
-- Separate requirements for runtime, CI, and training.  
-- Capture tool for building **custom datasets**.  
-
-See [`docs/INDUSTRIAL_NOTES.md`](docs/INDUSTRIAL_NOTES.md) for recruiter-focused notes (Siemens, Bosch, BMW, Audi, Mercedes, NVIDIA).  
+This repository serves as a **technical prototype** and a **teaching resource**.
 
 ---
 
-## 📈 Roadmap
-- ✅ Industrial-ready baseline (this repo).  
-- ⏳ Dataset capture (ongoing).  
-- ⏳ Model training & export (Colab + YOLOv8).  
-- ⏳ Inference on Pi5 (FPS & latency benchmarking).  
-- ⏳ Dashboard enhancements (streamlit-webrtc, SQLite history).  
-- ⏳ Final demo video + LinkedIn/Medium post.  
+## 🏭 Roadmap
+- ✅ Architecture baseline (this repo).
+- ⏳ Dataset capture (ongoing).
+- ⏳ Model training & export (YOLO26n + Colab).
+- ⏳ Inference on Pi5 (FPS & latency benchmarking).
+- ⏳ Final demo video.
 
 ---
 
