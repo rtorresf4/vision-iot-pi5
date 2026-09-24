@@ -25,9 +25,10 @@ To perform a review, the following inputs must be available:
 The review must be conducted in the following order:
 1. **Scope Verification:** Check that only files in `ALLOWED CHANGES` were modified and no files in `FORBIDDEN CHANGES` were touched.
 2. **Architecture Check:** Verify the changes adhere to the repository architecture patterns and guidelines.
-3. **Test-Protection Check:** Confirm that no existing tests were weakened or deleted, and that new/updated tests provide proper coverage.
-4. **Code Quality & Correctness:** Inspect the code for bugs, style, edge cases, and robustness.
-5. **Validation Verification:** Execute the `VALIDATION COMMANDS` locally and verify that they pass.
+3. **Project Context Lifecycle Check:** Confirm that the implementation plan adheres to the lightweight checkpoint assessment criteria for post-integration updates to `docs/project-context.md`.
+4. **Test-Protection Check:** Confirm that no existing tests were weakened or deleted, and that new/updated tests provide proper coverage.
+5. **Code Quality & Correctness:** Inspect the code for bugs, style, edge cases, and robustness.
+6. **Validation Verification:** Execute the `VALIDATION COMMANDS` locally and verify that they pass.
 
 ## 3. Findings and Classification
 
