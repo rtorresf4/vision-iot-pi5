@@ -4,6 +4,8 @@ This document serves as the durable, lightweight checkpoint for the `vision-iot-
 
 **This document is an index and operational checkpoint, not a source of architectural truth.**
 
+**It is not the authoritative source of live workflow execution state. Current execution state must be derived from repository evidence, including Git state, Git history, and relevant TASK artifacts.**
+
 ## 1. Source-of-Truth Hierarchy
 If any information in this file conflicts with the following, the files listed below take absolute precedence:
 1. `docs/architecture.md` and `docs/adr/` (System Architecture)
@@ -20,8 +22,8 @@ If any information in this file conflicts with the following, the files listed b
 - **TASK-001:** Completed.
 - **TASK-002:** Completed.
 - **TASK-003:** Completed and integrated.
-- **Current Task:** TASK-004 (Project Context & Recovery).
-- **Next Planned Task:** Baseline tooling + quality gate implementation.
+- **TASK-004:** Completed and integrated.
+- **Next Recommended Work:** Baseline tooling + quality gate implementation.
 
 ## 4. Architecture v2 Snapshot (High-Level)
 - Based on `docs/architecture.md` and `docs/adr/`.
@@ -50,13 +52,19 @@ If any information in this file conflicts with the following, the files listed b
 - **Features:** Deferred features must not be assumed implemented.
 
 ## 8. Context Recovery Protocol (New Session)
-Before proceeding with any work, a new AI session must explicitly inspect:
-1. `docs/project-context.md`
+Before proceeding with any work, a new AI session must reconstruct its environment using the following two-part protocol:
+
+### 8.1 Durable Recovery Context Reconstruction
+To restore durable project knowledge, explicitly inspect the following authoritative project artifacts:
+1. `docs/project-context.md` (This document)
 2. `GEMINI.md`
 3. `docs/architecture.md`
-4. relevant `docs/adr/`
+4. Relevant `docs/adr/` files
 5. `.agent/rules/`
-6. the current TASK
-7. repository and Git state
 
-The repository artifacts remain authoritative according to the source-of-truth hierarchy.
+### 8.2 Live Execution-State Reconstruction
+To determine the current operational status, explicitly inspect:
+1. Git/repository state (e.g., `git status`, `git branch`)
+2. Relevant `TASK` artifacts (`.agent/tasks/`)
+
+Use `docs/project-context.md` only as a durable recovery snapshot and navigation/index mechanism. Repository artifacts remain authoritative according to the source-of-truth hierarchy.

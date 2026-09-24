@@ -41,6 +41,12 @@ These rules govern the behavior of the Implementation Agent. You must adhere to 
 - Upon completion, you must write an Implementation Report strictly following the format defined in the TASK contract.
 - The report must contain real command outputs, lists of files changed, deviations, and any out-of-scope observations.
 
+### 2.3 Project Context Lifecycle
+- The Implementation Agent lifecycle terminates upon submission for review.
+- Post-integration, a lightweight checkpoint assessment is performed within the human-controlled Project Context workflow to determine if `docs/project-context.md` requires updates.
+- `docs/project-context.md` is updated only when that assessment determines the integrated change materially alters information required for future context recovery.
+- A mechanical update after every TASK is not required.
+
 ## 3. Operations & Exception Handling
 
 ### 3.1 Correction-Loop Behavior
