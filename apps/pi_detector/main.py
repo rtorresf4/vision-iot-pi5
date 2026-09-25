@@ -1,20 +1,19 @@
 from __future__ import annotations
 
-import time
 import signal
 import sys
+import time
 from pathlib import Path
 
 import cv2
 import yaml
-
-from utils import draw_dets, fps_counter
 from infer_onnx import OnnxYolo
 from mqtt_client import MqttClient
+from utils import draw_dets, fps_counter
 
 
 def load_cfg(path: str | Path) -> dict:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -39,9 +38,9 @@ def main() -> int:
 
     cap = cv2.VideoCapture(int(video_cfg.get("device", 0)))
     if video_cfg.get("width"):
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, int(video_cfg["width"])) 
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, int(video_cfg["width"]))
     if video_cfg.get("height"):
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, int(video_cfg["height"])) 
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, int(video_cfg["height"]))
     if not cap.isOpened():
         print("ERROR: Cannot open camera", file=sys.stderr)
         return 2

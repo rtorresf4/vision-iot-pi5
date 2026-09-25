@@ -96,9 +96,9 @@ def main() -> int:
     )
     saved = 0
     frame_idx = 0
-    win_name = "capture_dataset" if args.show else None
+    win_name: str | None = "capture_dataset" if args.show else None
 
-    if args.show:
+    if args.show and win_name:
         cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
         cv2.resizeWindow(win_name, args.width, args.height)
 
@@ -111,7 +111,7 @@ def main() -> int:
                 continue
 
             frame_idx += 1
-            if args.show:
+            if args.show and win_name:
                 cv2.imshow(win_name, frame)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
@@ -144,4 +144,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

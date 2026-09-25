@@ -26,6 +26,6 @@ jobs:
           ruff --version
           black --check .
           ruff check .
-          mypy apps || true
+          mypy apps
       - name: Run tests
         run: pytest -q
