@@ -14,7 +14,7 @@ dev:
 lint:
 	black --check .
 	ruff check .
-	mypy apps
+	mypy apps src
 
 test:
 	pytest -q

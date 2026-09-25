@@ -1,3 +1,10 @@
+[project]
+name = "vision-iot"
+version = "0.1.0"
+description = "Vision IoT Architecture-v2"
+requires-python = ">=3.11"
+dependencies = []
+
 [tool.black]
 line-length = 100
 target-version = ["py311"]
@@ -20,6 +27,9 @@ ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [build-system]
 requires = ["setuptools>=61.0"]
