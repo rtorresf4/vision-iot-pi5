@@ -26,6 +26,6 @@ jobs:
           ruff --version
           black --check .
           ruff check .
-          mypy apps
+          mypy apps src
       - name: Run tests
         run: pytest -q
