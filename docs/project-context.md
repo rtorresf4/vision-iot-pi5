@@ -15,7 +15,7 @@ If any information in this file conflicts with the following, the files listed b
 
 ## 2. Project & Milestone Status
 - **Project Purpose:** Vision-based monitoring system for package/box visible-damage inspection using a fixed camera on a Raspberry Pi 5. One package is inspected per cycle.
-- **Current Milestone:** M0 (Initial Baseline & Infrastructure).
+- **Current Milestone:** M1 (Core Foundation).
 - **Project Repository State:** The repository contains the baseline architecture, ADRs, initial detectors implementation, and CI/CD infrastructure.
 
 ## 3. Task History
@@ -23,7 +23,9 @@ If any information in this file conflicts with the following, the files listed b
 - **TASK-002:** Completed.
 - **TASK-003:** Completed and integrated.
 - **TASK-004:** Completed and integrated.
-- **Next Recommended Work:** Baseline tooling + quality gate implementation.
+- **TASK-005:** Completed and integrated.
+- **TASK-006:** Completed and integrated.
+- **Next Recommended Work:** Plan the first M1 Core Foundation task from Architecture v2 and the accepted ADRs.
 
 ## 4. Architecture v2 Snapshot (High-Level)
 - Based on `docs/architecture.md` and `docs/adr/`.
@@ -47,7 +49,7 @@ If any information in this file conflicts with the following, the files listed b
 
 ## 7. Known Limitations & Technical Debt
 - **Tests:** Many tests are currently placeholders.
-- **CI/CD:** `mypy` is currently configured to be non-gating in CI.
+- **Quality Gate:** Black, Ruff, mypy, and pytest are blocking validation gates locally and in CI.
 - **Implementation Status:** Pre-Architecture-v2 implementation is not fully compliant. The Streamlit dashboard is in a prototype/partial state.
 - **Features:** Deferred features must not be assumed implemented.
 
