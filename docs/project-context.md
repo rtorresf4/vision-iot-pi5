@@ -16,7 +16,7 @@ If any information in this file conflicts with the following, the files listed b
 ## 2. Project & Milestone Status
 - **Project Purpose:** Vision-based monitoring system for package/box visible-damage inspection using a fixed camera on a Raspberry Pi 5. One package is inspected per cycle.
 - **Current Milestone:** M1 (Core Foundation).
-- **Project Repository State:** The repository contains the baseline architecture, ADRs, initial detectors implementation, and CI/CD infrastructure.
+- **Project Repository State:** The repository contains the baseline architecture, ADRs, the Architecture-v2 core Python package foundation under src/vision_iot, initial detectors/apps implementation, and CI/CD infrastructure with blocking quality gates covering both apps and src.
 
 ## 3. Task History
 - **TASK-001:** Completed.
@@ -25,7 +25,8 @@ If any information in this file conflicts with the following, the files listed b
 - **TASK-004:** Completed and integrated.
 - **TASK-005:** Completed and integrated.
 - **TASK-006:** Completed and integrated.
-- **Next Recommended Work:** Plan the first M1 Core Foundation task from Architecture v2 and the accepted ADRs.
+- **TASK-007:** Completed and integrated.
+- **Next Recommended Work:** Plan further M1 tasks from Architecture v2 and accepted ADRs. Live execution state and active task contracts must be derived directly from Git history and `.agent/tasks/`.
 
 ## 4. Architecture v2 Snapshot (High-Level)
 - Based on `docs/architecture.md` and `docs/adr/`.
@@ -40,12 +41,14 @@ If any information in this file conflicts with the following, the files listed b
 - **Gate:** Human approval is required for all integration steps.
 - **Rules:** Implementation Agent must strictly follow task contracts, ensure deterministic validation, and not modify out-of-scope files.
 
-## 6. Process Learnings (TASK-001 through TASK-003)
+## 6. Process Learnings
 - **Deterministic Validation:** Evidence of successful command output is mandatory; unsupported agent claims that "validation passed" are insufficient.
 - **File Inspection:** New/untracked files must be inspected directly; rely on direct content reading rather than `git diff`.
 - **Review Protocol:** The lightweight reviewer used previously did not always strictly adhere to the required protocol vocabulary.
 - **Human Gate:** Automated reviews are not exhaustive; critical issues were identified by Human Gate during TASK-003.
 - **Escalation:** Architectural escalation was successfully used to resolve ambiguous review findings.
+- **Validation Artifacts:** Validation commands can generate untracked repository artifacts (observed with setuptools `*.egg-info` after editable installation); therefore working-tree status must be checked after validation.
+- **Environment & Git Configuration:** Agents must not modify local/global/repository Git configuration as a workaround for environment/tooling issues; such issues must be escalated to the human environment owner.
 
 ## 7. Known Limitations & Technical Debt
 - **Tests:** Many tests are currently placeholders.
