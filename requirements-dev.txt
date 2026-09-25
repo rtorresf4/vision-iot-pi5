@@ -5,3 +5,4 @@ ruff
 isort
 mypy
 pre-commit
+types-PyYAML

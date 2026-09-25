@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import paho.mqtt.client as mqtt
 
@@ -17,7 +18,7 @@ class MqttClient:
         keepalive: int = 60,
         qos: int = 0,
         base_topic: str = "factory/line1",
-        on_connected: Optional[Callable[[], None]] = None,
+        on_connected: Callable[[], None] | None = None,
     ) -> None:
         self.host = host
         self.port = port
@@ -27,7 +28,9 @@ class MqttClient:
         self.connected = False
 
         self.cli = mqtt.Client(client_id=client_id, clean_session=True)
-        self.cli.will_set(f"{self.base_topic}/status", json.dumps({"state": "lost"}), qos=1, retain=True)
+        self.cli.will_set(
+            f"{self.base_topic}/status", json.dumps({"state": "lost"}), qos=1, retain=True
+        )
 
         def _on_connect(cli, userdata, flags, rc):
             self.connected = rc == 0
@@ -58,7 +61,9 @@ class MqttClient:
                 time.sleep(backoff)
                 backoff = min(backoff * 2.0, 30.0)
 
-    def publish(self, suffix: str, payload: dict[str, Any], retain: bool = False, qos: Optional[int] = None) -> None:
+    def publish(
+        self, suffix: str, payload: dict[str, Any], retain: bool = False, qos: int | None = None
+    ) -> None:
         topic = f"{self.base_topic}/{suffix}"
         msg = json.dumps(payload, ensure_ascii=False)
         self.cli.publish(topic, msg, qos=self.qos if qos is None else qos, retain=retain)

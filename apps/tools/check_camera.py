@@ -81,7 +81,7 @@ def set_fourcc(cap: cv2.VideoCapture, fourcc: str | None) -> str | None:
     if len(f) != 4:
         return None
     try:
-        code = cv2.VideoWriter_fourcc(*f)
+        code = cv2.VideoWriter.fourcc(*f)
         cap.set(cv2.CAP_PROP_FOURCC, code)
         return f
     except Exception:
