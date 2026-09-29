@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+
 from vision_iot.hardware import FakeFrameSource, Frame, FrameSource
 
 
