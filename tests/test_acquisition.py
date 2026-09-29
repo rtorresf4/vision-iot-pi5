@@ -1,10 +1,57 @@
-"""Tests for acquisition foundation (Frame, FrameSource, FakeFrameSource)."""
+"""Tests for acquisition foundation (Frame, FrameSource, FakeFrameSource, OpenCVFrameSource, CameraError)."""
 
 from __future__ import annotations
 
+import cv2
 import numpy as np
+import pytest
 
-from vision_iot.hardware import FakeFrameSource, Frame, FrameSource
+from vision_iot.hardware import (
+    CameraError,
+    FakeFrameSource,
+    Frame,
+    FrameSource,
+    OpenCVFrameSource,
+)
+
+
+class MockVideoCapture:
+    """Mock for cv2.VideoCapture to test OpenCVFrameSource without hardware."""
+
+    def __init__(self, device: int | str = 0) -> None:
+        self.device = device
+        self._opened = True
+        self.released = False
+        self.next_ok = True
+        self.next_frame = np.zeros((480, 640, 3), dtype=np.uint8)
+
+    def isOpened(self) -> bool:
+        return self._opened and not self.released
+
+    def read(self):
+        if not self.isOpened():
+            return False, None
+        return self.next_ok, self.next_frame
+
+    def release(self) -> None:
+        self.released = True
+
+
+class FailingOpenVideoCapture(MockVideoCapture):
+    """Mock capturing device that fails to open."""
+
+    def __init__(self, device: int | str = 0) -> None:
+        super().__init__(device)
+        self._opened = False
+
+
+class FailingReadVideoCapture(MockVideoCapture):
+    """Mock capturing device that succeeds opening but fails on read."""
+
+    def __init__(self, device: int | str = 0) -> None:
+        super().__init__(device)
+        self.next_ok = False
+        self.next_frame = None
 
 
 def test_frame_construction() -> None:
@@ -77,3 +124,60 @@ def test_repeated_acquisition_determinism() -> None:
     assert frame1.image.ndim == 3
     assert frame1.image.shape[0] == frame1.height
     assert frame1.image.shape[1] == frame1.width
+
+
+def test_opencv_frame_source_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test successful camera opening, acquisition, Frame conversion, width/height derivation, and id/timestamp population."""
+    monkeypatch.setattr(cv2, "VideoCapture", MockVideoCapture)
+
+    source = OpenCVFrameSource(device=0)
+    frame = source.get_frame()
+
+    assert isinstance(frame, Frame)
+    assert isinstance(frame.id, str)
+    assert len(frame.id) > 0
+    assert isinstance(frame.timestamp, float)
+    assert isinstance(frame.image, np.ndarray)
+    assert frame.image.ndim == 3
+    assert frame.height == frame.image.shape[0] == 480
+    assert frame.width == frame.image.shape[1] == 640
+
+    source.release()
+
+
+def test_opencv_frame_source_open_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that camera-open failure produces CameraError."""
+    monkeypatch.setattr(cv2, "VideoCapture", FailingOpenVideoCapture)
+
+    with pytest.raises(CameraError):
+        OpenCVFrameSource(device=0)
+
+
+def test_opencv_frame_source_read_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that frame-read failure produces CameraError."""
+    monkeypatch.setattr(cv2, "VideoCapture", FailingReadVideoCapture)
+
+    source = OpenCVFrameSource(device=0)
+    with pytest.raises(CameraError):
+        source.get_frame()
+    source.release()
+
+
+def test_opencv_frame_source_deterministic_release(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test explicit deterministic camera-resource release."""
+    mock_instances = []
+
+    class TrackingMockVideoCapture(MockVideoCapture):
+        def __init__(self, device: int | str = 0) -> None:
+            super().__init__(device)
+            mock_instances.append(self)
+
+    monkeypatch.setattr(cv2, "VideoCapture", TrackingMockVideoCapture)
+
+    source = OpenCVFrameSource(device=0)
+    assert len(mock_instances) == 1
+    assert not mock_instances[0].released
+
+    source.release()
+
+    assert mock_instances[0].released
