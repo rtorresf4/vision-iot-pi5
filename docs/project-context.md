@@ -21,8 +21,9 @@ If any information in this file conflicts with the following, the files listed b
 - **Completed Milestones:** M1 (Core Foundation) and M2 (Acquisition).
 - **Current Milestone:** M3 (Vision Pipeline).
 - **M2 Architecture Status:** Architecturally complete. No additional M2 implementation task is required before M3.
+- **M3 Status:** In progress. M3.A (Vision Contract Foundation) is complete and integrated.
 - **Hardware Validation Status:** Physical Raspberry Pi / USB camera validation remains required before making hardware/deployment claims, but it does not block M3 development.
-- **Project Repository State:** The repository contains the baseline Architecture-v2 documentation and ADRs, the installable `vision_iot` Python package foundation, the complete M2 acquisition boundary, existing legacy/prototype applications, and CI/CD infrastructure with blocking quality gates covering both `apps` and `src`.
+- **Project Repository State:** The repository contains the baseline Architecture-v2 documentation and ADRs, the installable `vision_iot` Python package foundation, the complete M2 acquisition boundary, the first stable M3 vision contracts, existing legacy/prototype applications, and CI/CD infrastructure with blocking quality gates covering both `apps` and `src`.
 
 ## 3. Task History
 
@@ -37,7 +38,8 @@ If any information in this file conflicts with the following, the files listed b
 - **TASK-009:** Completed and integrated. Corrected the pre-existing Ruff/isort import-sorting conflict by retaining Ruff as the single import-sorting authority.
 - **TASK-010:** Completed and integrated. Added the concrete `OpenCVFrameSource`, project-owned `CameraError`, deterministic explicit camera release, and hardware-independent OpenCV acquisition tests while preserving the existing `Frame` and `FrameSource` contracts.
 - **TASK-011:** Completed and integrated. Aligned Black, Ruff, and mypy development/pre-commit versions after TASK-010 exposed inconsistent quality-tool versions. Stable validation across local quality gates and pre-commit was restored.
-- **Next Recommended Work:** Begin M3 with the Architecture-approved Vision Contract Foundation increment. Materialize the project-owned `Preprocessor`, `ModelInput`, `InferenceEngine`, and `RawInference` contracts before introducing a concrete inference runtime. Live execution state and active task contracts must continue to be derived directly from Git history and `.agent/tasks/`.
+- **TASK-012:** Completed and integrated. Established the M3.A Vision Contract Foundation with project-owned `SpatialMetadata`, `ModelInput`, `RawInference`, `Preprocessor`, and `InferenceEngine` contracts. An architecture escalation during implementation resolved the previously deferred public representations of `ModelInput` and `RawInference`; the resulting decisions were materialized in ADR-003, ADR-004, and ADR-010 before implementation was accepted.
+- **Next Recommended Work:** Obtain Architecture guidance for the next bounded M3 increment now that the Vision Contract Foundation is established. Do not infer the next concrete preprocessing, inference-runtime, or postprocessing scope from this checkpoint. Live execution state and active task contracts must continue to be derived directly from Git history and `.agent/tasks/`.
 
 ## 4. Architecture v2 Snapshot (High-Level)
 
@@ -45,11 +47,16 @@ If any information in this file conflicts with the following, the files listed b
 - **Core Components:** Vision inference pipeline, MQTT event bus, Streamlit dashboard.
 - **Acquisition Boundary:** M2 is architecturally complete. The established acquisition boundary consists of `Frame`, `FrameSource`, deterministic `FakeFrameSource`, concrete `OpenCVFrameSource`, project-owned `CameraError`, and deterministic explicit camera release.
 - **Acquisition Isolation:** Concrete OpenCV acquisition is isolated behind the project-owned `FrameSource` boundary. Downstream Architecture-v2 components must not depend directly on `cv2.VideoCapture`.
-- **Frame Representation:** `Frame.image` uses a NumPy `ndarray` with a three-dimensional `(height, width, channels)` image-shaped layout. The first two dimensions correspond to `Frame.height` and `Frame.width`. Color ordering, exact channel count, dtype, value range, normalization, model tensor representation, contiguity, mutability, and ownership/copy semantics remain intentionally deferred; ADR-004 is authoritative.
-- **Vision Pipeline Transition:** The next Architecture-v2 boundary is `Frame -> Preprocessor -> ModelInput -> InferenceEngine -> RawInference`.
-- **M3 Contract Foundation:** The first M3 increment is limited to the project-owned `Preprocessor`, `ModelInput`, `InferenceEngine`, and `RawInference` contracts, with minimal deterministic test doubles where necessary to demonstrate substitutability and composition.
-- **Deferred Vision Semantics:** Undefined public representations or semantics for `ModelInput.data`, `ModelInput.metadata`, `RawInference.outputs`, or `RawInference.timing` must not be guessed. If existing authoritative architecture artifacts do not determine a required representation, implementation must stop and escalate to Architecture.
-- **Runtime Boundary:** No concrete ONNX, NCNN, TensorFlow/TFLite, Ultralytics, or other inference runtime belongs in the first M3 contract-foundation increment.
+- **Frame Representation:** `Frame.image` uses a NumPy `ndarray` with a three-dimensional `(height, width, channels)` image-shaped layout. The first two dimensions correspond to `Frame.height` and `Frame.width`. Color ordering, exact channel count, dtype, value range, normalization, contiguity, mutability, and ownership/copy semantics remain intentionally deferred; ADR-004 is authoritative.
+- **M3.A Vision Boundary:** The established first M3 boundary is `Frame -> Preprocessor -> ModelInput -> InferenceEngine -> RawInference`.
+- **SpatialMetadata Representation:** `SpatialMetadata` contains exactly `original_width`, `original_height`, `input_width`, `input_height`, `scale_x`, `scale_y`, `pad_x`, and `pad_y`. It carries reversible spatial-transformation information only.
+- **ModelInput Representation:** `ModelInput.data` is a project-owned NumPy `ndarray` numerical interchange representation after preprocessing, and `ModelInput.metadata` is `SpatialMetadata`.
+- **RawInference Representation:** `RawInference.outputs` is an ordered `tuple[np.ndarray, ...]` of raw numerical runtime outputs. Runtime-native output structures must be converted before crossing the `InferenceEngine` boundary.
+- **Inference Timing:** `RawInference.inference_time_ms` represents elapsed inference-engine execution duration, in milliseconds, for the associated outputs. It covers the inference stage rather than general wall-clock or pipeline timing.
+- **Vision Abstractions:** `Preprocessor` and `InferenceEngine` are synchronous project-owned boundaries. M3.A introduces contracts only, not production preprocessing or a concrete inference runtime.
+- **Deferred ModelInput Semantics:** Color ordering, dtype, value range, normalization policy, NCHW/NHWC layout, batch semantics, exact model-input dimensions, exact channel count, contiguity, quantization, and model-specific tensor semantics remain intentionally deferred.
+- **Deferred RawInference Semantics:** Output count, shapes, dtype, names, YOLO-specific output layout, parsing, confidence/class/bounding-box interpretation, and NMS semantics remain intentionally deferred.
+- **Runtime Boundary:** No concrete ONNX, NCNN, TensorFlow/TFLite, Ultralytics, or other inference runtime has yet been introduced into the Architecture-v2 vision pipeline.
 - **Deferred Components:** DHT22/PIR sensor integration is deferred.
 - **Runtime Strategy:** YOLO26n is the initial reference model; ONNX is the baseline runtime/artifact path; NCNN is an optimized candidate. Production runtime selection is benchmark-driven.
 - **Contract-Based Design:** Architecture-v2 uses project-owned stable internal contracts rather than exposing framework-specific structures. Detailed definitions are authoritative in `docs/architecture.md` and ADRs.
@@ -68,7 +75,8 @@ If any information in this file conflicts with the following, the files listed b
 - **File Inspection:** New/untracked files must be inspected directly; rely on direct content reading rather than `git diff` alone.
 - **Review Protocol:** Independent review must use the required ADS verdict and finding vocabulary defined by `.agent/rules/review.md`.
 - **Human Gate:** Automated reviews are not exhaustive; Human Gate has identified implementation scope creep, architecture gaps, and unnecessary API expansion despite green automated validation.
-- **Architecture Escalation:** Existing dependencies or implementation convenience do not implicitly authorize a public/internal contract representation. TASK-008 correctly escalated the unresolved `Frame.image` representation, resulting in an explicit ADR-004 decision before implementation proceeded.
+- **Architecture Escalation:** Existing dependencies or implementation convenience do not implicitly authorize a public/internal contract representation. TASK-008 escalated the unresolved `Frame.image` representation, and TASK-012 independently escalated unresolved `ModelInput` and `RawInference` representations. Both cases resulted in explicit architecture decisions before implementation proceeded.
+- **Public Contract Discipline:** Broad representations such as `Any`, generic dictionaries, or runtime-native structures are still public contract decisions; apparent flexibility does not make them architecture-neutral.
 - **Validation Artifacts:** Validation commands can generate or modify repository files (observed with setuptools `*.egg-info` and pre-commit auto-fixes); working-tree and staged state must therefore be inspected after validation and before commit.
 - **Tooling Stability:** Multiple tools must not hold conflicting responsibility for the same automatic transformation. TASK-009 removed the standalone isort pre-commit hook after a deterministic Ruff/isort import-sorting cycle was reproduced. Ruff remains the single import-sorting authority.
 - **Tool Version Alignment:** Local/CI and pre-commit quality-tool versions must not drift into contradictory behavior. TASK-011 aligned Black, Ruff, and mypy versions after TASK-010 exposed a reproducible Ruff formatting/import-sorting disagreement.
@@ -82,9 +90,9 @@ If any information in this file conflicts with the following, the files listed b
 - **Tests:** Test coverage remains intentionally limited to the currently established Architecture-v2 foundations and existing legacy/prototype behavior.
 - **Quality Gate:** Black, Ruff, mypy, and pytest are blocking validation gates locally and in CI. Ruff is the single authority for import sorting in the pre-commit workflow, and development/pre-commit quality-tool versions have been aligned.
 - **Hardware Validation:** `OpenCVFrameSource` is covered by deterministic hardware-independent tests, but physical Raspberry Pi / USB camera validation remains pending. This does not block M3, but must be completed before relevant hardware/deployment claims are made.
-- **Vision Pipeline:** M3 production preprocessing, concrete inference runtime integration, postprocessing, detections, and final inference results are not implemented yet.
+- **Vision Pipeline:** M3.A contracts are established, but production preprocessing, concrete inference runtime integration, postprocessing, detections, and final inference results are not implemented yet.
 - **Implementation Status:** Pre-Architecture-v2 implementation is not fully compliant. The Streamlit dashboard remains in a prototype/partial state, and legacy inference code under `apps/pi_detector/` must not be treated as the authoritative definition of new Architecture-v2 contracts.
-- **Deferred Semantics:** Deferred `Frame.image`, `ModelInput`, and `RawInference` semantics must not be inferred or stabilized without authoritative architecture support.
+- **Deferred Semantics:** Deferred `Frame.image`, `ModelInput`, and `RawInference` semantics must not be inferred or stabilized without authoritative architecture support. ADR-004 and related architecture artifacts define which representations are established and which semantics remain deferred.
 - **Features:** DHT22/PIR integration and other explicitly deferred capabilities remain outside the current milestone.
 
 ## 8. Context Recovery Protocol (New Session)
