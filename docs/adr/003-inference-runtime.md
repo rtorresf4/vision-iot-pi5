@@ -15,6 +15,16 @@ Runtime-native output structures must not cross the project-owned `InferenceEngi
 
 This keeps downstream vision processing independent from ONNX, NCNN, Ultralytics, or other runtime-specific output structures.
 
+### M3.C ONNX InferenceEngine Baseline Decisions
+- ONNX Runtime provides the first concrete `InferenceEngine` implementation (`ONNXInferenceEngine`).
+- The engine receives an existing local ONNX model artifact explicitly.
+- The engine creates, owns, and reuses one ONNX Runtime session initialized during engine instantiation.
+- The baseline supports exactly one model input.
+- The runtime input name is obtained from session/model metadata rather than becoming part of `ModelInput`.
+- Runtime outputs are adapted into the existing ordered `tuple[np.ndarray, ...]` `RawInference.outputs` representation.
+- `CPUExecutionProvider` is the baseline execution provider.
+- Runtime/model-specific output interpretation is excluded from the engine.
+
 ## Consequences
 - The production runtime will be selected based on benchmark evidence.
 - ONNX and NCNN are not pre-declared as the final winner.

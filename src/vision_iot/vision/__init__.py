@@ -7,6 +7,7 @@ from vision_iot.vision.contracts import (
     RawInference,
     SpatialMetadata,
 )
+from vision_iot.vision.inference_onnx import ONNXInferenceEngine
 from vision_iot.vision.preprocessing import YoloPreprocessor
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "Preprocessor",
     "InferenceEngine",
     "YoloPreprocessor",
+    "ONNXInferenceEngine",
 ]
