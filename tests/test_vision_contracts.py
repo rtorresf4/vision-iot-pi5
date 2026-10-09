@@ -9,8 +9,12 @@ import numpy as np
 
 from vision_iot.hardware import Frame
 from vision_iot.vision import (
+    BoundingBox,
+    Detection,
     InferenceEngine,
+    InferenceResult,
     ModelInput,
+    Postprocessor,
     Preprocessor,
     RawInference,
     SpatialMetadata,
@@ -159,3 +163,87 @@ def test_deterministic_vision_chain() -> None:
     assert isinstance(raw_inf.outputs, tuple)
     assert len(raw_inf.outputs) >= 1
     assert raw_inf.inference_time_ms == 5.0
+
+
+class DummyPostprocessor(Postprocessor):
+    """Minimal deterministic test double for Postprocessor contract."""
+
+    def process(
+        self,
+        raw_inference: RawInference,
+        frame: Frame,
+        metadata: SpatialMetadata,
+    ) -> InferenceResult:
+        bbox = BoundingBox(x1=10.0, y1=20.0, x2=30.0, y2=40.0)
+        detection = Detection(
+            class_id=0,
+            class_name="dummy_class",
+            confidence=0.95,
+            bounding_box=bbox,
+        )
+        return InferenceResult(
+            frame_id=frame.id,
+            timestamp=frame.timestamp,
+            detections=(detection,),
+            inference_time_ms=raw_inference.inference_time_ms,
+        )
+
+
+def test_bounding_box_representation() -> None:
+    """Verify BoundingBox exposes floating-point xyxy coordinates."""
+    box = BoundingBox(x1=1.5, y1=2.5, x2=10.0, y2=20.0)
+    assert box.x1 == 1.5
+    assert box.y1 == 2.5
+    assert box.x2 == 10.0
+    assert box.y2 == 20.0
+
+
+def test_detection_representation() -> None:
+    """Verify Detection represents class ID, name, confidence, and bounding box."""
+    box = BoundingBox(x1=0.0, y1=0.0, x2=10.0, y2=10.0)
+    det = Detection(
+        class_id=1,
+        class_name="defect",
+        confidence=0.88,
+        bounding_box=box,
+    )
+    assert det.class_id == 1
+    assert det.class_name == "defect"
+    assert det.confidence == 0.88
+    assert det.bounding_box == box
+
+
+def test_inference_result_representation() -> None:
+    """Verify InferenceResult represents frame ID, timestamp, detections, and inference time."""
+    box = BoundingBox(x1=0.0, y1=0.0, x2=5.0, y2=5.0)
+    det = Detection(class_id=0, class_name="ok", confidence=0.9, bounding_box=box)
+    result = InferenceResult(
+        frame_id="frame-123",
+        timestamp=1234567890.0,
+        detections=(det,),
+        inference_time_ms=12.5,
+    )
+    assert result.frame_id == "frame-123"
+    assert result.timestamp == 1234567890.0
+    assert len(result.detections) == 1
+    assert result.detections[0] == det
+    assert result.inference_time_ms == 12.5
+
+
+def test_postprocessor_contract() -> None:
+    """Verify Postprocessor abstract boundary and test double execution."""
+    image = np.zeros((100, 100))
+    frame = Frame(id="f-1", timestamp=100.0, image=image, width=100, height=100)
+    metadata = SpatialMetadata(100, 100, 100, 100, 1.0, 1.0, 0.0, 0.0)
+    raw_inf = RawInference(outputs=(np.zeros((1,)),), inference_time_ms=8.5)
+
+    postprocessor = DummyPostprocessor()
+    result = postprocessor.process(raw_inf, frame, metadata)
+
+    assert isinstance(result, InferenceResult)
+    assert result.frame_id == "f-1"
+    assert result.timestamp == 100.0
+    assert result.inference_time_ms == 8.5
+    assert len(result.detections) == 1
+    assert result.detections[0].class_name == "dummy_class"
+    assert result.detections[0].bounding_box.x1 == 10.0
