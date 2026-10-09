@@ -2,7 +2,7 @@
 
 ## STATUS
 
-READY
+COMPLETED
 
 ## MILESTONE
 
