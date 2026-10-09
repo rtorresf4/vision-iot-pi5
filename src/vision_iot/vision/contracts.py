@@ -40,6 +40,36 @@ class RawInference:
     inference_time_ms: float
 
 
+@dataclass
+class BoundingBox:
+    """Represents a bounding box in original frame pixel coordinates (xyxy)."""
+
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+
+
+@dataclass
+class Detection:
+    """Represents a project-owned computer vision detection."""
+
+    class_id: int
+    class_name: str
+    confidence: float
+    bounding_box: BoundingBox
+
+
+@dataclass
+class InferenceResult:
+    """Represents stable project-owned computer vision inference results."""
+
+    frame_id: str
+    timestamp: float
+    detections: tuple[Detection, ...]
+    inference_time_ms: float
+
+
 class Preprocessor(ABC):
     """Abstract base class for transforming acquired Frames into ModelInputs."""
 
@@ -55,4 +85,18 @@ class InferenceEngine(ABC):
     @abstractmethod
     def infer(self, model_input: ModelInput) -> RawInference:
         """Execute inference on ModelInput synchronously and return RawInference."""
+        pass
+
+
+class Postprocessor(ABC):
+    """Abstract base class for transforming RawInference into InferenceResult."""
+
+    @abstractmethod
+    def process(
+        self,
+        raw_inference: RawInference,
+        frame: Frame,
+        metadata: SpatialMetadata,
+    ) -> InferenceResult:
+        """Transform raw inference results, frame, and metadata into InferenceResult synchronously."""
         pass
