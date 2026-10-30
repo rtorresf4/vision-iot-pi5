@@ -25,6 +25,21 @@ to the original acquired-frame dimensions:
 `Frame.width` and `Frame.height` therefore describe the spatial dimensions of
 the original acquired frame.
 
+#### Frame Timestamp Semantics
+
+`Frame.timestamp` is a finite floating-point POSIX/Unix epoch timestamp expressed in seconds, including fractional seconds.
+
+- It records the acquisition time assigned by the source.
+- The existing OpenCV source (`OpenCVFrameSource`) samples system wall-clock time (`time.time()`) following a successful frame read; this does not claim exact hardware exposure-time precision.
+- Producers implementing `FrameSource` (including `FakeFrameSource` and test fixtures) are responsible for supplying compatible source timestamps.
+- `FakeFrameSource` preserves its injected frame and does not generate timestamps.
+- Synthetic timestamps used by isolated tests serve as fixtures for contract and correlation checks, not evidence of a separate production timestamp epoch.
+- The numerical value is propagated without reinterpretation through `InferenceResult` (`InferenceResult.timestamp`) and domain inspection events (`InspectionEvent.timestamp`).
+- The timestamp is strictly distinct from inference execution duration measured using `inference_time_ms`.
+- Downstream serialization or publication time must not replace the originating frame timestamp.
+
+No new dataclass fields, runtime validation changes, or custom timestamp classes are introduced by this definition.
+
 The following `Frame.image` properties remain intentionally deferred until a
 subsequent architecture increment demonstrates that they are required:
 
