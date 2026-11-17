@@ -3,7 +3,9 @@ name = "vision-iot"
 version = "0.1.0"
 description = "Vision IoT Architecture-v2"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "paho-mqtt==2.2.0",
+]
 
 [tool.black]
 line-length = 100
